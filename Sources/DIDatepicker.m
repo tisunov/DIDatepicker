@@ -152,8 +152,13 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
 }
 
 - (NSDate *)beginningOfWeek {
-    NSDate *today = [NSDate date];
     NSCalendar *calendar = [NSCalendar currentCalendar];
+    
+    NSDateComponents *components = [[NSCalendar currentCalendar]
+                                    components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit
+                                    fromDate:[NSDate date]];
+    NSDate *today = [calendar dateFromComponents:components];
+    
     NSDateComponents *weekdayComponents = [calendar components:NSCalendarUnitWeekday fromDate:today];
     
     NSDateComponents *componentsToSubtract = [[NSDateComponents alloc] init];
@@ -179,8 +184,30 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
     [self fillDatesFromDate:beginningOfWeek toDate:endOfWeek];
 }
 
+- (void)selectNextDate {
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    
+    NSDateComponents *componentsToAdd = [[NSDateComponents alloc] init];
+    [componentsToAdd setDay:1];
+    [self selectDate:[calendar dateByAddingComponents:componentsToAdd toDate:_selectedDate options:0]];
+}
+
+- (void)selectPreviousDate {
+    if ([_selectedDate isEqualToDate:[self beginningOfWeek]]) return;
+    
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDateComponents *componentsToAdd = [[NSDateComponents alloc] init];
+    [componentsToAdd setDay:-1];
+    
+    NSDate *previousDate = [calendar dateByAddingComponents:componentsToAdd toDate:_selectedDate options:0];
+    
+    [self selectDate:previousDate];
+}
+
 - (void)fillWeeksFromCurrent {
     NSCalendar *calendar = [NSCalendar currentCalendar];
+    // Override locale to make week start on Monday
+    [calendar setFirstWeekday:2];
     
     NSDateComponents *componentsToAdd = [[NSDateComponents alloc] init];
     [componentsToAdd setDay:7 * 52];
@@ -191,7 +218,9 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
     [self fillDatesFromDate:[self beginningOfWeek] toDate:lastDayOfWeek52FromNow];
     
     NSDateComponents *components = [calendar components:NSCalendarUnitWeekday fromDate:[NSDate date]];
-    [self selectDateAtIndex:components.weekday - 2]; // Monday - 2
+    NSDateComponents *bofComponents = [calendar components:NSCalendarUnitWeekday fromDate:beginningOfWeek];
+    
+    [self selectDateAtIndex:components.weekday - bofComponents.weekday];
 }
 
 - (void)fillCurrentMonth
@@ -259,7 +288,7 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-//    [self.datesCollectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
+    //    [self.datesCollectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
     _selectedDate = [self.dates objectAtIndex:indexPath.item];
     
     [collectionView deselectItemAtIndexPath:selectedIndexPath animated:YES];

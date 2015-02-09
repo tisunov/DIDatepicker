@@ -24,6 +24,9 @@ extern const CGFloat kDIDatepickerHeight;
 - (void)fillCurrentWeek;
 - (void)fillCurrentMonth;
 - (void)fillCurrentYear;
+
+- (void)selectNextDate;
+- (void)selectPreviousDate;
 - (void)selectDate:(NSDate *)date;
 - (void)selectDateAtIndex:(NSUInteger)index;
 
