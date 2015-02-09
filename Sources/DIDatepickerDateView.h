@@ -5,11 +5,6 @@
 
 #import <UIKit/UIKit.h>
 
-
-extern const CGFloat kDIDatepickerItemWidth;
-extern const CGFloat kDIDatepickerSelectionLineWidth;
-
-
 @interface DIDatepickerCell : UICollectionViewCell
 
 // data

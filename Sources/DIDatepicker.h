@@ -20,6 +20,7 @@ extern const CGFloat kDIDatepickerHeight;
 
 // methods
 - (void)fillDatesFromDate:(NSDate *)fromDate numberOfDays:(NSInteger)nextDatesCount;
+- (void)fillWeeksFromCurrent;
 - (void)fillCurrentWeek;
 - (void)fillCurrentMonth;
 - (void)fillCurrentYear;

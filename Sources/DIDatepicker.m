@@ -7,7 +7,7 @@
 #import "DIDatepickerDateView.h"
 
 const CGFloat kDIDatepickerHeight = 60.;
-const CGFloat kDIDatepickerSpaceBetweenItems = 15.;
+const CGFloat kDIDatepickerSpaceBetweenItems = 6.;
 NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
 
 @interface DIDatepicker (){
@@ -41,7 +41,7 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
     self.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     self.backgroundColor = [UIColor whiteColor];
     self.bottomLineColor = [UIColor colorWithWhite:0.816 alpha:1.000];
-    self.selectedDateBottomLineColor = self.tintColor;
+    self.selectedDateBottomLineColor = [UIColor colorWithRed:242./255. green:93./255. blue:28./255. alpha:1.];
 }
 
 #pragma mark Setters | Getters
@@ -60,8 +60,10 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
     _selectedDate = selectedDate;
     
     NSIndexPath *selectedCellIndexPath = [NSIndexPath indexPathForItem:[self.dates indexOfObject:selectedDate] inSection:0];
-    [self.datesCollectionView deselectItemAtIndexPath:selectedIndexPath animated:YES];
-    [self.datesCollectionView selectItemAtIndexPath:selectedCellIndexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
+    [self.datesCollectionView performBatchUpdates:^{
+        [self.datesCollectionView deselectItemAtIndexPath:selectedIndexPath animated:YES];
+        [self.datesCollectionView selectItemAtIndexPath:selectedCellIndexPath animated:YES scrollPosition:UICollectionViewScrollPositionCenteredHorizontally];
+    } completion:nil];
     selectedIndexPath = selectedCellIndexPath;
     
     [self sendActionsForControlEvents:UIControlEventValueChanged];
@@ -71,16 +73,18 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
 {
     if (!_datesCollectionView) {
         UICollectionViewFlowLayout *collectionViewLayout = [[UICollectionViewFlowLayout alloc] init];
-        [collectionViewLayout setItemSize:CGSizeMake(kDIDatepickerItemWidth, CGRectGetHeight(self.bounds))];
+        // Make space for 7 days
+        [collectionViewLayout setItemSize:CGSizeMake(CGRectGetWidth(self.bounds) / 7.0f - kDIDatepickerSpaceBetweenItems, CGRectGetHeight(self.bounds))];
         [collectionViewLayout setScrollDirection:UICollectionViewScrollDirectionHorizontal];
-        [collectionViewLayout setSectionInset:UIEdgeInsetsMake(0, kDIDatepickerSpaceBetweenItems, 0, kDIDatepickerSpaceBetweenItems)];
+        [collectionViewLayout setSectionInset:UIEdgeInsetsMake(0, kDIDatepickerSpaceBetweenItems / 2, 0, kDIDatepickerSpaceBetweenItems / 2)];
         [collectionViewLayout setMinimumLineSpacing:kDIDatepickerSpaceBetweenItems];
         
         _datesCollectionView = [[UICollectionView alloc] initWithFrame:self.bounds collectionViewLayout:collectionViewLayout];
+        _datesCollectionView.pagingEnabled = YES;
         [_datesCollectionView registerClass:[DIDatepickerCell class] forCellWithReuseIdentifier:kDIDatepickerCellIndentifier];
         [_datesCollectionView setBackgroundColor:[UIColor clearColor]];
         [_datesCollectionView setShowsHorizontalScrollIndicator:NO];
-        [_datesCollectionView setAllowsMultipleSelection:YES];
+        [_datesCollectionView setAllowsMultipleSelection:NO];
         _datesCollectionView.dataSource = self;
         _datesCollectionView.delegate = self;
         [self addSubview:_datesCollectionView];
@@ -147,6 +151,17 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
     [self fillDatesFromDate:fromDate toDate:[calendar dateByAddingComponents:days toDate:fromDate options:0]];
 }
 
+- (NSDate *)beginningOfWeek {
+    NSDate *today = [NSDate date];
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    NSDateComponents *weekdayComponents = [calendar components:NSCalendarUnitWeekday fromDate:today];
+    
+    NSDateComponents *componentsToSubtract = [[NSDateComponents alloc] init];
+    [componentsToSubtract setDay: - ((([weekdayComponents weekday] - [calendar firstWeekday]) + 7 ) % 7)];
+    
+    return [calendar dateByAddingComponents:componentsToSubtract toDate:today options:0];
+}
+
 - (void)fillCurrentWeek
 {
     NSDate *today = [NSDate date];
@@ -162,6 +177,21 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
     NSDate *endOfWeek = [calendar dateByAddingComponents:componentsToAdd toDate:beginningOfWeek options:0];
     
     [self fillDatesFromDate:beginningOfWeek toDate:endOfWeek];
+}
+
+- (void)fillWeeksFromCurrent {
+    NSCalendar *calendar = [NSCalendar currentCalendar];
+    
+    NSDateComponents *componentsToAdd = [[NSDateComponents alloc] init];
+    [componentsToAdd setDay:7 * 52];
+    
+    NSDate *beginningOfWeek = [self beginningOfWeek];
+    NSDate *lastDayOfWeek52FromNow = [calendar dateByAddingComponents:componentsToAdd toDate:beginningOfWeek options:0];
+    
+    [self fillDatesFromDate:[self beginningOfWeek] toDate:lastDayOfWeek52FromNow];
+    
+    NSDateComponents *components = [calendar components:NSCalendarUnitWeekday fromDate:[NSDate date]];
+    [self selectDateAtIndex:components.weekday - 2]; // Monday - 2
 }
 
 - (void)fillCurrentMonth
@@ -229,7 +259,7 @@ NSString * const kDIDatepickerCellIndentifier = @"kDIDatepickerCellIndentifier";
 
 - (void)collectionView:(UICollectionView *)collectionView didSelectItemAtIndexPath:(NSIndexPath *)indexPath
 {
-    [self.datesCollectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
+//    [self.datesCollectionView scrollToItemAtIndexPath:indexPath atScrollPosition:UICollectionViewScrollPositionCenteredHorizontally animated:YES];
     _selectedDate = [self.dates objectAtIndex:indexPath.item];
     
     [collectionView deselectItemAtIndexPath:selectedIndexPath animated:YES];

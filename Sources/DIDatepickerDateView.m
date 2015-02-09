@@ -5,11 +5,6 @@
 
 #import "DIDatepickerDateView.h"
 
-
-const CGFloat kDIDatepickerItemWidth = 46.;
-const CGFloat kDIDatepickerSelectionLineWidth = 51.;
-
-
 @interface DIDatepickerCell ()
 
 @property (strong, nonatomic) UILabel *dateLabel;
@@ -53,8 +48,9 @@ const CGFloat kDIDatepickerSelectionLineWidth = 51.;
     
     NSMutableAttributedString *dateString = [[NSMutableAttributedString alloc] initWithString:[NSString stringWithFormat:@"%@ %@\n%@", dayFormattedString, [dayInWeekFormattedString uppercaseString], monthFormattedString]];
     
+    NSString *dateFontName = [self isWeekday:date] ? @"HelveticaNeue" : @"HelveticaNeue-Thin";
     [dateString addAttributes:@{
-                                NSFontAttributeName: [UIFont fontWithName:@"HelveticaNeue-Thin" size:20],
+                                NSFontAttributeName: [UIFont fontWithName:dateFontName size:16],
                                 NSForegroundColorAttributeName: [UIColor blackColor]
                                 } range:NSMakeRange(0, dayFormattedString.length)];
     
@@ -97,7 +93,10 @@ const CGFloat kDIDatepickerSelectionLineWidth = 51.;
 - (void)setSelected:(BOOL)selected
 {
     [super setSelected:selected];
-    self.selectionView.alpha = (selected)?1.0f:0.0f;
+    
+    [UIView animateWithDuration:0.25 animations:^{
+        self.selectionView.alpha = (selected) ? 1.0f : 0.0f;
+    }];
 }
 
 #pragma mark - Getters
@@ -117,9 +116,8 @@ const CGFloat kDIDatepickerSelectionLineWidth = 51.;
 - (UIView *)selectionView
 {
     if (!_selectionView) {
-        _selectionView = [[UIView alloc] initWithFrame:CGRectMake((CGRectGetWidth(self.frame) - 51) / 2, CGRectGetHeight(self.frame) - 3, 51, 3)];
+        _selectionView = [[UIView alloc] initWithFrame:CGRectMake((CGRectGetWidth(self.frame) - 40) / 2, CGRectGetHeight(self.frame) - 3, 40, 3)];
         _selectionView.alpha = 0.0f;
-        _selectionView.backgroundColor = [UIColor colorWithRed:242./255. green:93./255. blue:28./255. alpha:1.];
         [self addSubview:_selectionView];
     }
     
